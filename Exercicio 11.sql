@@ -249,33 +249,33 @@ select * from tbEndereco;
 
 
 -- exercício 7 
--- arrumar--
-Delimiter && 
-CREATE PROCEDURE spInsertClientePF(vNomeCli varchar(200), vNumEnd decimal(6,0), vCompEnd varchar(50),  vCEP decimal (8,0),  vCPF decimal(11,0),  vRG decimal(9,0), vRG_Dig char(1),  vNasc char(10),  vLogradouro varchar (200),  vBairro varchar(200), vCidade varchar (200), vUF char (2)) 
+
+Delimiter $$ 
+create procedure spInsertClientePF(vNomeCli varchar(200), vNumEnd decimal(6,0), vCompEnd varchar(50),  vCEP decimal (8,0),  vCPF decimal(11,0),  vRG decimal(9,0), vRG_Dig char(1),  vNasc char(10),  vLogradouro varchar (200),  vBairro varchar(200), vCidade varchar (200), vUF char (2)) 
   
- BEGIN 
+begin
   
   
  if not exists (select*from tbEndereco where CEP=VCEP) then  
-       if not exists (SELECT * FROM tbBairro WHERE Bairro = vBairro) then 
+       if not exists (select * from tbBairro where Bairro = vBairro) then 
        insert into tbBairro (Bairro) values (vBairro); 
            end if ; 
   
-       if not exists  (SELECT * FROM tbCidade WHERE Cidade = vCidade) then 
+       if not exists  (select * from tbCidade where Cidade = vCidade) then 
        insert into tbCidade (Cidade) values (vCidade); 
             end if; 
   
-       if not exists (SELECT * FROM tbEstado WHERE UF = vUF) then 
+       if not exists (select * from tbEstado where UF = vUF) then 
            insert into tbEstado (UF) values (vUF); 
            end if ; 
   
         insert into tbEndereco (Logradouro, BairroId, CidadeId, UFId, CEP) 
-        values (vLogradouro,(SELECT BairroId FROM tbBairro WHERE Bairro = vBairro), 
+        values (vLogradouro,(select BairroId from tbBairro where Bairro = vBairro), 
         (select CidadeId from tbCidade where Cidade = vCidade), 
         (select UfId from tbEstado where UF = vUF), vCEP); 
  end if; 
   
-                  if not exists (select CPF from tbCliente_pf where CPF = vCPF) THEN 
+                  if not exists (select CPF from tbCliente_pf where CPF = vCPF) then 
                           insert into tbcliente (NomeCli, NumEnd, CompEnd, CEP) 
                          values (vNomeCli, vNumEnd, vCompEnd, (select CEP from tbEndereco where CEP = vCEP)); 
   
@@ -283,16 +283,16 @@ CREATE PROCEDURE spInsertClientePF(vNomeCli varchar(200), vNumEnd decimal(6,0), 
                                  values ((select id from tbcliente where NomeCli = vNomeCli and NumEnd = vNumEnd),  
                  vCPF, vRG, vRG_Dig, str_to_date( vNasc,'%d/%m/%Y')); 
   
-        END IF; 
+        end if; 
   
- end&& 
+ end$$
   
   
- call spInsertClientePF('Pimpão', 325, NULL, 12345051, 12345678911, 12345678, '0', '12/10/2000', 'Av Brasil', 'Lapa', 'Campinas', 'SP'); 
+ call spInsertClientePF('Pimpão', 325, null, 12345051, 12345678911, 12345678, '0', '12/10/2000', 'Av Brasil', 'Lapa', 'Campinas', 'SP'); 
  call spInsertClientePF('Disney Chaplin', 89, 'Ap. 12', 12345053, 12345678912, 12345679, '0', '21/11/2001', 'Av Paulista', 'Penha', 'Rio de Janeiro', 'RJ'); 
- call spInsertClientePF('Marciano', 744, NULL, 12345054, 12345678913, 12345680, '0', '01/06/2001', 'Rua Ximbú', 'Penha', 'Rio de Janeiro', 'RJ'); 
- call spInsertClientePF('Lança Perfume', 128, NULL, 12345059, 12345678914, 12345681, 'X', '05/04/2004', 'Rua Veia', 'Jardim Santa Isabel', 'Cuiabá', 'MT'); 
- call spInsertClientePF('Remédio Amargo', 2585, NULL, 12345058, 12345678915, 12345682, '0', '15/07/2002', 'Av Nova', 'Jardim Santa Isabel', 'Cuiabá', 'MT'); 
+ call spInsertClientePF('Marciano', 744, null, 12345054, 12345678913, 12345680, '0', '01/06/2001', 'Rua Ximbú', 'Penha', 'Rio de Janeiro', 'RJ'); 
+ call spInsertClientePF('Lança Perfume', 128, null, 12345059, 12345678914, 12345681, 'X', '05/04/2004', 'Rua Veia', 'Jardim Santa Isabel', 'Cuiabá', 'MT'); 
+ call spInsertClientePF('Remédio Amargo', 2585, null, 12345058, 12345678915, 12345682, '0', '15/07/2002', 'Av Nova', 'Jardim Santa Isabel', 'Cuiabá', 'MT'); 
 
 select * from tbEndereco;
 
@@ -300,36 +300,58 @@ select * from tbCliente;
 select * from tbCliente_pf;
 
 -- exercício 8 --
--- arrumar--
-delimiter $$
-create procedure spInsertClientePJ(vNomeCli varchar(200), vCNPJ decimal(14,0),vIE decimal(11,0),
- vCEP decimal(8,0), vLogradouro varchar(200), vNumEnd decimal(6,0), vCompEnd varchar(50),vBairro varchar(200), vCidade varchar(200), vUF varchar(200))
-begin
-		declare vId int;
 
-if not exists(select* from tbEndereco where CEP = vCEP) then
-	call spInsertTbEndereco(vLogradouro, vBairro, vCidade, vUF, vCEP);
-    end if;
-    
- if not exists(select * from tbCliente_pj where CNPJ = vCNPJ) then
-		insert into tbCliente(NomeCli,NumEnd,CompEnd,cep) 
-        values (vNomeCli,vNumEnd,vCompEnd,vCEP);
-        set vId = (select Id from tbCliente);
-		insert into tbCliente_pj(CNPJ, IE, Id) values (vCNPJ, vIE, vId);
-	end if;
-        
-end $$
+Delimiter $$ 
+create procedure spInsertClientePJ(vNomeCli varchar(200),vCNPJ decimal (14,0), vIE decimal (11,0), vCEP decimal (8,0), vLogradouro varchar (200), vNumEnd decimal(6,0), vCompEnd varchar(50), vBairro varchar(200), vCidade varchar (200), vUF char (2)) 
+  
+ Begin 
+  declare vId int;
+  set vId = (select min(Id) from tbCliente);
+  
+ if not exists (select CEP from tbEndereco where CEP = vCEP) then  
+       if not exists (select Bairro from tbBairro where Bairro = vBairro) then 
+       insert into tbBairro (Bairro) values (vBairro); 
+           end if ; 
+  
+       if not exists  (select CidadeID from tbCidade where Cidade = vCidade) then 
+       insert into tbCidade (Cidade) values (vCidade); 
+            end if; 
+  
+       if not exists (select UFId from tbEstado where UF = vUF) then 
+           insert into tbEstado (UF) values (vUF); 
+           end if ; 
+  
+        insert into tbEndereco (Logradouro, BairroId, CidadeId, UFId, CEP) 
+        values (vLogradouro,(select BairroId from tbBairro where Bairro = vBairro), 
+        (select CidadeId from tbCidade where Cidade = vCidade), 
+        (select UfId from tbEstado where UF = vUF), vCEP); 
+ end if; 
+  
+                  if not exists (select CNPJ from tbCliente_pj where CNPJ = vCNPJ) then 
+                          insert into tbcliente (NomeCli, NumEnd, CompEnd, CEP) 
+                         values (vNomeCli, vNumEnd, vCompEnd, (select CEP from tbEndereco where CEP = vCEP)); 
+  
+                                 insert into tbCliente_pJ (Id, CNPJ, IE) 
+                                 values ((select id from tbcliente where NomeCli = vNomeCli and NumEnd = vNumEnd),  
+                 vCNPJ, vIE); 
+  
+        end if; 
+  
+ end$$ 
 
 call spInsertClientePJ('Paganada',12345678912345,98765432198,12345051,'Av. Brasil',159,null,'Lapa','Campinas','SP');
 call spInsertClientePJ('Caloteando',12345678912346,98765432199,12345053,'Av. Paulista',69,null,'Penha','Rio de Janeiro','RJ');
 call spInsertClientePJ('Semgrana',12345678912347,98765432100,12345060,'Rua dos Amores',189,null,'Sei lá','Recife','PE');
 call spInsertClientePJ('Cemreais',12345678912348,98765432101,12345060,'Rua dos Amores',5024,'Sala 23','Sei lá','Recife','PE');
 call spInsertClientePJ('Durango',12345678912349,98765432102,12345060,'Rua dos Amores',1254,null,'Sei lá','Recife','PE');
+select * from tbEndereco;
 
+select * from tbCliente;
+select * from tbCliente_pj;
 drop procedure spInsertClientePJ;
 
 -- exercício 9
--- arrumar
+
 delimiter $$
 create procedure spInsertCompras(vNotaFiscal int, vNome varchar (200), vDataCompra varchar(10), vCodigoBarras decimal (14,0), vValorItem decimal (8,2), vQtd int, vQtdTotal int, vValorTotal decimal(8,2)) 
 begin
@@ -376,30 +398,41 @@ drop procedure spInsertCompras;
 -- Exercicio 10 DML --
 -- arrumar--
 delimiter $$
-create procedure spInsertVendas(vNumeroVenda int, vDataVenda date, vTotalVenda decimal(8,2), vCodigoBarras decimal(14,0), vQtd int, vValorItem decimal (8,2), vNomeCli varchar(200))
+create procedure spInsertVendas(vNumeroVenda int, vCodigoBarras decimal(14,0), vQtd int, vValorItem decimal (8,2), vNomeCli varchar(200))
 begin
     declare vId_Cli int;
-    
- if exists (select * from tbcliente where NomeCli = vNomeCli) then
-	insert into tbVenda(NumeroVenda, DataVenda, TotalVenda, Id_Cli) values (vNumeroVenda, vDataVenda, vTotalVenda, vId_Cli);
     set vId_Cli = (select Id_Cli from tbcliente where NomeCli = vNomeCli);
+    
+ if exists (select Id_Cli from tbcliente where NomeCli = vNomeCli) then
+	insert into tbVenda(NumeroVenda, DataVenda, TotalVenda, Id_Cli) values (vNumeroVenda, DataVenda, vTotalVenda, vId_Cli);
 end if;
 
- if exists (select * from tbItem_Venda where CodigoBarras = vCodigoBarras) then
+ if exists (select CodigoBarras from tbProduto where CodigoBarras = vCodigoBarras) then
   insert into tbItem_Venda(Qtd, ValorItem, CodigoBarras, NumeroVenda) values (vQtd, vValorItem, vCodigoBarras, vNumeroVenda);
   set vCodigoBarras = (select CodigoBarras from tbItem_Venda where CodigoBarras = vCodigoBarras);
 end if;
 end $$
 
-call spInsertVendas(null, current_date(), 54.61, 12345678910111, 1 , 54.61, 'Pimpão');
-call spInsertVendas(current_date(), 200.90, 12345678910112, 2 , 100.45, 'Lança Perfume');
-call spInsertVendas(current_date(), 44.00, 12345678910113, 2 , 44.00, 'Pimpão');
+call spInsertVendas(null,current_date(), 54.61, 12345678910111, 1 , 54.61, 'Pimpão');
+call spInsertVendas(null,current_date(), 200.90, 12345678910112, 2 , 100.45, 'Lança Perfume');
+call spInsertVendas(null,current_date(), 44.00, 12345678910113, 2 , 44.00, 'Pimpão');
 
 select * from tbVenda;
 select * from tbItem_Venda;
+drop procedure spInsertVendas
 
--- falta o 11 --
+-- Exercicio 11 DML --
 
+delimiter $$
+create procedure spNotaFiscalInsert (vNF int, vCliente varchar(200))
+begin
+declare vTotalNota decimal(8,2);
+set vTotalNota = (select sum(TotalVenda) from tbVenda where Id_Cli = (select Id from tbCliente where NomeCli = vCliente));
+insert into tbNota_Fiscal(NF, TotalNota, DataEmissao) values(vNF, vTotalNota, current_date());
+End $$;
+
+call spNotaFiscalInsert (359, 'Pimpão', '05-09-2022')
+call spNotaFiscalInsert (360, 'Lança Perfume', '05-09-2022')
 -- Exercicio 12 DML --
 call spInsertTbProduto (12345678910130, 'Camiseta de Poliéster', 35.61, 100);
 call spInsertTbProduto (12345678910131, 'Blusa Frio Moletom', 200.00, 100);
